@@ -165,25 +165,15 @@ class ModelGenerator(object):
         """
         print("data[0] : ",data[0].keys())
         print("data[0][image] : ",type(data[0]["image"]))
-        #print("data : ",data.keys())
-        #image = data[0].get("data")
         image = bytes(data[0]["image"])
         print("image length : ",len(image))
         self.return_image=data[0].get("return_image").decode()=="True"
         print("return image : ",self.return_image)
         if image is None:
             image = data[0].get("body")
-    
-        #image=Image.open(io.BytesIO(image)).convert('RGB') 
         image=Image.open(io.BytesIO(image))
         print("mode : " , image.mode)
-        #image = cv2.cvtColor(np.array(image), cv2.COLOR_RGB2BGR)
         self.image = np.array(image)
-        #np_image = np.fromstring(image.decode(), np.uint8)
-        #image = cv2.imdecode(np_image, 1)
-        #print("original_image : " , image)
-        #image = cv2.imdecode(image,cv2.IMREAD_COLOR)
-        #image = cv2.imdecode(image)
         self.original_image_shape = self.image.shape
         transformed_image = get_valid_transforms()(image = self.image)["image"]
         self.transformed_image_shape = transformed_image.shape
@@ -192,30 +182,18 @@ class ModelGenerator(object):
     def inference(self, image, topk=5):
         ''' inference
         '''
-        
-        
-
         outputs = self.predictor(image)
         self.outputs = outputs
-        #print("outputs : ",outputs)
+        
         print("instances : ",outputs["instances"])
-        #print("Boxes : ",outputs["instances"].pred_boxes)
-        #print("Boxes to numpy : ",outputs["instances"].pred_boxes.tensor.detach().cpu().numpy())
-        #print("All to numpy : ",outputs["instances"].get_fields())
-        if (len(outputs["instances"].pred_boxes)==0):
-            return []
-        
-        else : 
-            result = outputs["instances"].get_fields()
-            for key in result:
-                if key == "pred_boxes":
-                    result[key] = result[key].tensor.detach().cpu().numpy().tolist()
-                else :
-                    result[key] = result[key].detach().cpu().numpy().tolist()
-            print("Final res : ",result)
-            return result
-        
-        return []
+        result = outputs["instances"].get_fields()
+        for key in result:
+            if key == "pred_boxes":
+                result[key] = result[key].tensor.detach().cpu().numpy().tolist()
+            else :
+                result[key] = result[key].detach().cpu().numpy().tolist()
+        print("Final res : ",result)
+        return result
 
     def boxes_to_original_shape(self , inference_output):
         height_ratio = self.original_image_shape[0] / self.transformed_image_shape[0]
@@ -250,37 +228,26 @@ class ModelGenerator(object):
         meta = self.set_meta_data()
         v = Visualizer(self.image[:, :, ::-1], meta, scale=1.2)
         out = v.draw_instance_predictions(self.outputs["instances"].to("cpu"))
-        #result_image = cv2.cvtColor(out.get_image() , cv2.COLOR_BGR2RGB)
         result_image = out.get_image()
-        #byte_obj = cv2.imencode(".png",out.get_image()[:, :, ::-1])[1].tobytes()
         byte_obj = cv2.imencode(".png",result_image)[1].tobytes()
-        #return io.BytesIO(byte_obj)
-        #return byte_obj.tostring()
-        #return FixFormat.base64_to_string(byte_obj)
         return FixFormat.byte_to_string(byte_obj)
 
     def postprocess(self, inference_output):
+        print("postprocess inference output : ",inference_output)
+        result = {}
         inference_output = self.add_pred_class_name(inference_output)
         inference_output = self.boxes_to_original_shape(inference_output)
-        result = {}
         result["boxes"] = inference_output
         if self.return_image : 
             result["image"] = self.draw_prediction()
-
+        
         return self.jsonify(result)
-        #return torch.Tensor([result["boxes"] , result["image"]])
-        #return torch.Tensor([[self.jsonify(result["boxes"]) , result["image"]]])
         
-
-        
-        #return inference_output
 
 _service = ModelGenerator()
 
 
 def handle(data, context):
-    #print("data : ",data)
-    #print("context : ",context)
     if not _service.initialized:
         _service.initialize(context)
 
@@ -292,13 +259,3 @@ def handle(data, context):
     data = _service.postprocess(data)
 
     return data
-
-if __name__ == "__main__" :
-    data = []
-    data["body"] = io.BytesIO()
-
-    data = _service.preprocess(data)
-    data = _service.inference(data)
-    data = _service.postprocess(data)
-
-    print(data)

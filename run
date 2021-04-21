@@ -1,1 +1,0 @@
-torchserve --ncs --start --ts-config ts-config.py --model-store model_store --models all

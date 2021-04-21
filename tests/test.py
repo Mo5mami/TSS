@@ -11,7 +11,7 @@ matplotlib.use('Qt5Agg')
 
 #inference_url = "http://127.0.0.1:8080/predictions/trash_detection"
 #inference_url = "http://127.0.0.1:8000/trash-detection/inference/"
-inference_url = "https://0.0.0.0:80"
+inference_url = "http://0.0.0.0:80/predictions/trash_detection"
 
 
 class FixFormat:

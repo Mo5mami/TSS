@@ -1,8 +1,0 @@
-FROM python:3.8.5
-MAINTAINER mami.mokhtar123@gmail.com
-COPY ./ /serve
-WORKDIR /serve
-RUN /serve/install_req
-EXPOSE 80
-RUN ["/bin/sh" , "-c" , "./prepare"]
-ENTRYPOINT ["/bin/sh" , "-c" , "./run"]

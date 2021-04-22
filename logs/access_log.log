@@ -229,3 +229,5 @@
 2021-04-21 02:52:15,249 - /127.0.0.1:47228 "POST /predictions/trash_detection HTTP/1.1" 200 7385
 2021-04-21 02:52:46,085 - /127.0.0.1:47234 "POST /predictions/trash_detection HTTP/1.1" 200 9729
 2021-04-21 03:59:17,461 - /127.0.0.1:48800 "POST /predictions/trash_detection HTTP/1.1" 200 55564
+2021-04-21 17:48:46,271 - /127.0.0.1:53988 "POST /predictions/trash_detection HTTP/1.1" 200 12281
+2021-04-21 17:49:40,160 - /127.0.0.1:53990 "POST /predictions/trash_detection HTTP/1.1" 200 6402

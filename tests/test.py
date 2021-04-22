@@ -9,9 +9,9 @@ import matplotlib
 from PIL import Image
 matplotlib.use('Qt5Agg')
 
-#inference_url = "http://127.0.0.1:8080/predictions/trash_detection"
+inference_url = "http://127.0.0.1:8080/predictions/trash_detection"
 #inference_url = "http://127.0.0.1:8000/trash-detection/inference/"
-inference_url = "http://0.0.0.0:80/predictions/trash_detection"
+#inference_url = "http://0.0.0.0:80/predictions/trash_detection"
 
 
 class FixFormat:
@@ -44,9 +44,9 @@ class FixFormat:
 
 
 if __name__ == "__main__":
-    #image_url = "/home/mo5/Desktop/work/projects/trash_taco/taco/media/bottles.jpg"
+    image_url = "/home/mo5/Desktop/work/projects/trash_taco/taco/media/bottles.jpg"
     #image_url = "/home/mo5/Desktop/work/projects/trash_taco/taco/media/cig.jpg"
-    image_url = "/home/mo5/Desktop/work/projects/trash_taco/taco/media/IMG_20210404_121831.jpg"
+    #image_url = "/home/mo5/Desktop/work/projects/trash_taco/taco/media/IMG_20210404_121831.jpg"
     #image_url = "/home/mo5/Desktop/work/projects/trash_taco/taco/media/no-trash.png"
     #image_url = "/home/mo5/Desktop/work/projects/trash_taco/taco/media/trello.png"
     image = open(image_url , "rb").read()

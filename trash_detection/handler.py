@@ -80,12 +80,13 @@ def get_detectron2_config(config , weight_path):
     cfg.MODEL.ROI_HEADS.BATCH_SIZE_PER_IMAGE = config.model["batchsize_per_image"]   # faster, and good enough for this toy dataset (default: 512)
     cfg.MODEL.ROI_HEADS.SCORE_THRESH_TEST = 0.5   # set a custom testing threshold
     cfg.MODEL.ROI_HEADS.NUM_CLASSES = config.model["num_classes"]  # only has one class (ballon). (see https://detectron2.readthedocs.io/tutorials/datasets.html#update-the-config-for-new-datasets)
-    cfg.OUTPUT_DIR = config.general["LOGS_PATH"]
-    cfg.OUTPUT_DIR_BEST=f'{config.general["LOGS_PATH"]}'
     cfg.SOLVER.AMP.ENABLED = True
     cfg.SEED = config.general["seed"]
-    os.makedirs(cfg.OUTPUT_DIR, exist_ok=True)
-    os.makedirs(cfg.OUTPUT_DIR_BEST, exist_ok=True)
+    # Size of the smallest side of the image during testing. Set to zero to disable resize in testing.
+    cfg.INPUT.MIN_SIZE_TEST = 0
+    # Maximum size of the side of the image during testing
+    cfg.INPUT.MAX_SIZE_TEST = 4000
+    
     return cfg
 
 def get_valid_transforms():
@@ -93,7 +94,7 @@ def get_valid_transforms():
         [
             
             A.SmallestMaxSize(max_size=1000, p=1.0),
-            A.CLAHE(p=1),
+            A.CLAHE(clip_limit=[4,4] , p=1),
             
         ], 
         p=1.0, 
@@ -163,36 +164,38 @@ class ModelGenerator(object):
         """
          Preprocess image
         """
-        print("data[0] : ",data[0].keys())
-        print("data[0][image] : ",type(data[0]["image"]))
+        
         image = bytes(data[0]["image"])
-        print("image length : ",len(image))
+        
         self.return_image=data[0].get("return_image").decode()=="True"
-        print("return image : ",self.return_image)
+        
         if image is None:
             image = data[0].get("body")
         image=Image.open(io.BytesIO(image))
-        print("mode : " , image.mode)
+        
         self.image = np.array(image)
         self.original_image_shape = self.image.shape
         transformed_image = get_valid_transforms()(image = self.image)["image"]
         self.transformed_image_shape = transformed_image.shape
+        
         return transformed_image
 
     def inference(self, image, topk=5):
         ''' inference
         '''
+        
         outputs = self.predictor(image)
         self.outputs = outputs
         
-        print("instances : ",outputs["instances"])
+        
         result = outputs["instances"].get_fields()
         for key in result:
             if key == "pred_boxes":
                 result[key] = result[key].tensor.detach().cpu().numpy().tolist()
             else :
                 result[key] = result[key].detach().cpu().numpy().tolist()
-        print("Final res : ",result)
+        
+        
         return result
 
     def boxes_to_original_shape(self , inference_output):
@@ -233,7 +236,7 @@ class ModelGenerator(object):
         return FixFormat.byte_to_string(byte_obj)
 
     def postprocess(self, inference_output):
-        print("postprocess inference output : ",inference_output)
+        
         result = {}
         inference_output = self.add_pred_class_name(inference_output)
         inference_output = self.boxes_to_original_shape(inference_output)

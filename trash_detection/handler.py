@@ -5,7 +5,7 @@ import os
 import torch
 from PIL import Image
 import base64
-
+import copy
 import json
 import pickle
 import random
@@ -21,7 +21,7 @@ from detectron2.utils.visualizer import Visualizer
 import albumentations as A
 from abc import ABC,ABCMeta, abstractmethod
 from yacs.config import CfgNode as CN
-
+import time
 
 _C = CN()
 _C.general=CN()
@@ -72,7 +72,7 @@ def get_detectron2_config(config , weight_path):
     #cfg.MODEL.DEVICE='cuda' if torch.cuda.is_available() else 'cpu'
     cfg.MODEL.DEVICE='cpu'
     cfg.merge_from_file(model_zoo.get_config_file(f"COCO-Detection/{config.model['model_name']}.yaml"))
-    cfg.DATALOADER.NUM_WORKERS = 1
+    cfg.DATALOADER.NUM_WORKERS = 0
     #cfg.MODEL.WEIGHTS = "./models/best.pth"
     #cfg.MODEL.WEIGHTS = properties.get("model_dir")
     cfg.MODEL.WEIGHTS = weight_path
@@ -93,7 +93,8 @@ def get_valid_transforms():
     return A.Compose(
         [
             
-            A.SmallestMaxSize(max_size=1000, p=1.0),
+            #A.SmallestMaxSize(max_size=1000, p=1.0),
+            A.SmallestMaxSize(max_size=600, p=1.0),
             A.CLAHE(clip_limit=[3,3] , p=1),
             
         ], 
@@ -123,6 +124,24 @@ class FixFormat:
     def byte_to_string(cls , b):
         return base64.b64encode(b).decode('utf-8')
 
+from functools import wraps
+from time import process_time
+
+
+def measure(func):
+    @wraps(func)
+    def _time_it(*args, **kwargs):
+        start = int(round(process_time() * 1000))
+        try:
+            return func(*args, **kwargs)
+        finally:
+            end_ = int(round(process_time() * 1000)) - start
+            print(
+                f"Total execution time {func.__name__}: {end_ if end_ > 0 else 0} ms"
+            )
+
+    return _time_it
+
 
 class ModelGenerator(object):
     """
@@ -130,7 +149,7 @@ class ModelGenerator(object):
     to generate the boxes of trash detected then postprocess if needed
     """
     
-
+    @measure
     def __init__(self):
         self.model = None
         self.mapping = None
@@ -143,22 +162,23 @@ class ModelGenerator(object):
          17: 'Food waste', 18: 'Squeezable tube', 19: 'Shoe', 20: 'Aluminium foil',
          21: 'Unlabeled litter', 22: 'Blister pack', 23: 'Battery', 24: 'Rope & strings',
          25: 'Cigarette', 26: 'Scrap metal',27: 'Plastic glooves'}
-
+        self.cfg=get_detectron2_config(weight_path=None)
     
 
-
+    @measure
     def initialize(self, ctx):
         """First try to load torchscript else load eager mode state_dict based model"""
-
+        
         properties = ctx.system_properties        
         self.device = torch.device("cpu")
         model_dir = properties.get("model_dir")
         weight_path = os.path.join(model_dir, "best_model.pth")
-        self.cfg=get_detectron2_config(weight_path=weight_path)
+        self.cfg.MODEL.WEIGHTS = weight_path
         self.predictor = DefaultPredictor(self.cfg)
         logger.debug('Model loaded correctly')
         self.initialized = True
 
+    @measure
     def preprocess(self, data):
         """
          Preprocess image
@@ -174,20 +194,19 @@ class ModelGenerator(object):
         
         self.image = np.array(image)
         self.original_image_shape = self.image.shape
-        transformed_image = get_valid_transforms()(image = self.image)["image"]
-        self.transformed_image_shape = transformed_image.shape
+        self.transformed_image = get_valid_transforms()(image = self.image)["image"]
+        self.transformed_image_shape = self.transformed_image.shape
         
-        return transformed_image
+        return self.transformed_image
 
+    @measure
     def inference(self, image, topk=5):
         ''' inference
         '''
         
-        outputs = self.predictor(image)
-        self.outputs = outputs
+        self.outputs = self.predictor(image)
         
-        
-        result = outputs["instances"].get_fields()
+        result = self.outputs["instances"].get_fields()
         for key in result:
             if key == "pred_boxes":
                 result[key] = result[key].tensor.detach().cpu().numpy().tolist()
@@ -197,6 +216,7 @@ class ModelGenerator(object):
         
         return result
 
+    @measure
     def boxes_to_original_shape(self , inference_output):
         height_ratio = self.original_image_shape[0] / self.transformed_image_shape[0]
         width_ratio = self.original_image_shape[1] / self.transformed_image_shape[1]
@@ -207,16 +227,19 @@ class ModelGenerator(object):
             box[3] = box[3] * width_ratio
         return inference_output
     
+    @measure
     def add_pred_class_name(self , inference_output):
         inference_output["pred_classes_names"] = []
         for idx in inference_output["pred_classes"]:
             inference_output["pred_classes_names"].append(self.categories[idx])
         return inference_output
 
+    @measure
     def jsonify(self , inference_output):
         json_result = json.dumps(inference_output , indent = 4)
         return [json_result]
 
+    @measure
     def set_meta_data(self,):
         meta = detectron2.data.Metadata()
         #meta.name = 'my_dataset'
@@ -226,17 +249,20 @@ class ModelGenerator(object):
           thing_classes=list(self.categories.values()))
         return meta
     
+    @measure
     def draw_prediction(self ,):
         meta = self.set_meta_data()
-        v = Visualizer(self.image[:, :, ::-1], meta, scale=1.2)
+        v = Visualizer(self.transformed_image[:, :, ::-1], meta, scale=1.2)
         out = v.draw_instance_predictions(self.outputs["instances"].to("cpu"))
         result_image = out.get_image()
         byte_obj = cv2.imencode(".png",result_image)[1].tobytes()
         return FixFormat.byte_to_string(byte_obj)
 
+    @measure
     def postprocess(self, inference_output):
         
         result = {}
+        inference_output = copy.deepcopy(inference_output)
         inference_output = self.add_pred_class_name(inference_output)
         inference_output = self.boxes_to_original_shape(inference_output)
         result["boxes"] = inference_output
@@ -248,7 +274,7 @@ class ModelGenerator(object):
 
 _service = ModelGenerator()
 
-
+@measure
 def handle(data, context):
     if not _service.initialized:
         _service.initialize(context)

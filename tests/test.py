@@ -9,9 +9,9 @@ import matplotlib
 from PIL import Image
 matplotlib.use('Qt5Agg')
 
-inference_url = "http://127.0.0.1:8080/predictions/trash_detection"
+#inference_url = "http://127.0.0.1:8080/predictions/trash_detection"
 #inference_url = "http://127.0.0.1:8000/trash-detection/inference/"
-#inference_url = "http://0.0.0.0:80/predictions/trash_detection"
+inference_url = "http://0.0.0.0:80/predictions/trash_detection"
 #inference_url = "https://torchservemo5.azurewebsites.net/predictions/trash_detection"
 #inference_url = "https://personalwebsiteback.herokuapp.com/trash-detection/inference/"
 
@@ -44,6 +44,23 @@ class FixFormat:
         return base64.b64decode(s)
 
 
+from functools import wraps
+from time import process_time
+
+
+def measure(func):
+    @wraps(func)
+    def _time_it(*args, **kwargs):
+        start = int(round(process_time() * 1000))
+        try:
+            return func(*args, **kwargs)
+        finally:
+            end_ = int(round(process_time() * 1000)) - start
+            print(
+                f"Total execution time {func.__name__}: {end_ if end_ > 0 else 0} ms"
+            )
+
+    return _time_it
 
 if __name__ == "__main__":
     #image_url = "/home/mo5/Desktop/work/projects/trash_taco/taco/media/bottles.jpg"
@@ -60,7 +77,15 @@ if __name__ == "__main__":
     query["data"] = {"return_image" : return_image}
     query["files"] = {"image" : image}
     #result = requests.post(inference_url , data = image)
+    
+    #start = int(round(process_time() * 1000))
+
     result = requests.post(inference_url , data = query["data"] , files = query["files"])
+
+    #end_ = int(round(process_time() * 1000)) - start
+    #print(f"Total execution time : {end_ if end_ > 0 else 0} ms" )
+
+
     print("response code : " , result)
     prediction = json.loads(result.content.decode())
     print("response content : " , prediction.keys())

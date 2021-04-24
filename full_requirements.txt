@@ -1,7 +1,7 @@
-torch==1.8.0
+torch==1.8.0+cpu
 torch-model-archiver==0.3.0
 torchserve==0.3.0
-torchvision==0.9.0
+torchvision==0.9.0+cpu
 Cython==0.29.21
 opencv-python==4.4.0.42
 scikit-image==0.16.2

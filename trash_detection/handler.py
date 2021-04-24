@@ -72,7 +72,7 @@ def get_detectron2_config(config , weight_path):
     #cfg.MODEL.DEVICE='cuda' if torch.cuda.is_available() else 'cpu'
     cfg.MODEL.DEVICE='cpu'
     cfg.merge_from_file(model_zoo.get_config_file(f"COCO-Detection/{config.model['model_name']}.yaml"))
-    cfg.DATALOADER.NUM_WORKERS = 2
+    cfg.DATALOADER.NUM_WORKERS = 1
     #cfg.MODEL.WEIGHTS = "./models/best.pth"
     #cfg.MODEL.WEIGHTS = properties.get("model_dir")
     cfg.MODEL.WEIGHTS = weight_path
@@ -152,7 +152,6 @@ class ModelGenerator(object):
 
         properties = ctx.system_properties        
         self.device = torch.device("cpu")
-        
         model_dir = properties.get("model_dir")
         weight_path = os.path.join(model_dir, "best_model.pth")
         self.cfg=get_detectron2_config(weight_path=weight_path)

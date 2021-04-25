@@ -3,5 +3,6 @@ MAINTAINER mami.mokhtar123@gmail.com
 COPY ./ /serve
 WORKDIR /serve
 EXPOSE 80
-RUN mkdir model_store && cd model_store && curl https://modelsstore.blob.core.windows.net/modelstore/trash_detection.mar --output trash_detection.mar && cd ..
+#RUN mkdir model_store && cd model_store && curl https://modelsstore.blob.core.windows.net/modelstore/trash_detection.mar --output trash_detection.mar && cd ..
+RUN ./prepare_prod
 ENTRYPOINT ./run_prod

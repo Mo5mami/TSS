@@ -1,0 +1,3 @@
+mkdir -p model_store
+cd trash_detection/models && curl https://modelsstore.blob.core.windows.net/modelstore/best_model.pth --output best_model.pth && cd ../../
+torch-model-archiver --model-name trash_detection --version 1.0 --model-file trash_detection/models/model_definition.py --serialized-file trash_detection/models/best_model.pth --handler trash_detection/handler.py --extra-files trash_detection/config.py --export-path model_store/ -f

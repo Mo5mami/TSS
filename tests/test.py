@@ -12,7 +12,11 @@ matplotlib.use('Qt5Agg')
 #inference_url = "http://127.0.0.1:8080/predictions/trash_detection"
 #inference_url = "http://127.0.0.1:8000/trash-detection/inference/"
 inference_url = "http://0.0.0.0:80/predictions/trash_detection"
+#inference_url = "http://127.0.0.1:80/predictions/trash_detection"
 #inference_url = "https://torchservemo5.azurewebsites.net/predictions/trash_detection"
+#inference_url = "http://54.162.113.184:80/predictions/trash_detection"
+#inference_url = "https://10.0.1.18/predictions/trash_detection"
+
 #inference_url = "https://personalwebsiteback.herokuapp.com/trash-detection/inference/"
 
 

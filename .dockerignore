@@ -1,2 +1,3 @@
-trash_detection/models
+trash_detection/models/*.pth
+trash_detection/models/*.pt
 env

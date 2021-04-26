@@ -1,4 +1,5 @@
 model_store
-trash_detection/models
+trash_detection/models/*.pth
+trash_detection/models/*.pt
 tests
 env

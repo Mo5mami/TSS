@@ -49,9 +49,9 @@ TorchServe server to deploy pytorch models
 
 1. Build image
 
-`docker build --tag torchserve:0.1.0 -f docker/torchserve/DockerfileDev (or DockerfileProd)`
+`docker build --tag torchserve:0.1.0 -f docker/torchserve/DockerfileProd` (Or DockerfileDev)
 
 2. run image
 
-`docker run -p 80:80 torchserve:0.1.0`
+`docker run -p 80:80 torchserve:0.1.0` (Expose the port you are using depending on dev and prod)
 

@@ -9,18 +9,18 @@ TorchServe server to deploy pytorch models
 
 | File/Folder      | Description |
 | ----------- | ----------- |
-| trash_detection      | the info of the trash detection model (mainly handler)       |
-| docker   | docker files for dev and prod        |
-| logs   | contains torchserve logs        |
-| DockerfileHeroku   | docker to deploy server in heroku (not used)        |
-| full_requirements.txt   | python requirements        |
-| instal_req   | script to install python environment dependencies        |
-| prepare   | script to create .mar files in modelstore that are used for deployment        |
-| prepare_prod   | script to download the model from the container then prepare it  |
-| run_dev   | script to run in development mode        |
-| run_prod   | script to run in production mode        |
-| run_heroku   | script to run in heroku (not used)    |
-| stop   | script to stop all the working models    |
+| trash_detection      | The info of the trash detection model (mainly handler)       |
+| docker   | Docker files for dev and prod        |
+| logs   | Torchserve logs        |
+| DockerfileHeroku   | Docker to deploy server in heroku (not used)        |
+| full_requirements.txt   | Python requirements        |
+| instal_req   | Script to install python environment dependencies        |
+| prepare   | Script to create .mar files in modelstore that are used for deployment        |
+| prepare_prod   | Script to download the model from the container then prepare it  |
+| run_dev   | Script to run in development mode        |
+| run_prod   | Script to run in production mode        |
+| run_heroku   | Script to run in heroku (not used)    |
+| stop   | Script to stop all the working models    |
 
 ## How to run:
 ### normal mode:
@@ -45,11 +45,15 @@ TorchServe server to deploy pytorch models
 
 `./run_dev` (or `./run_prod`)
 
+5. Stop the server
+
+`./stop`
+
 ### Docker mode:
 
 1. Build image
 
-`docker build --tag torchserve:0.1.0 -f docker/torchserve/DockerfileProd` (Or DockerfileDev)
+`docker build --tag torchserve:0.1.0 -f docker/torchserve/DockerfileProd .` (Or DockerfileDev)
 
 2. run image
 
